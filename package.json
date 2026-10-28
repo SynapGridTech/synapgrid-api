@@ -16,7 +16,7 @@
     "lint:check": "eslint \"src/**/*.ts\"",
     "start": "nest start",
     "dev": "nest start --watch",
-    "start:prod": "node dist/main.js",
+    "start:prod": "npm run migration:run && npm run seed && node dist/main.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

@@ -18,6 +18,7 @@ export class InitialSchema1757500000000 implements MigrationInterface {
       ? '"id" uuid PRIMARY KEY DEFAULT gen_random_uuid()'
       : '"id" varchar PRIMARY KEY';
     const ts = pg ? 'TIMESTAMP' : 'datetime';
+    const uuid = pg ? 'uuid' : 'varchar';
     const now = 'CURRENT_TIMESTAMP';
 
     await queryRunner.query(`
@@ -41,7 +42,7 @@ export class InitialSchema1757500000000 implements MigrationInterface {
         "expires_at" ${ts},
         "created_at" ${ts} NOT NULL DEFAULT ${now},
         "revoked_at" ${ts},
-        "user_id" varchar NOT NULL REFERENCES "users"("id") ON DELETE CASCADE
+        "user_id" ${uuid} NOT NULL REFERENCES "users"("id") ON DELETE CASCADE
       )`);
     await queryRunner.query(
       `CREATE INDEX "IDX_refresh_tokens_token_hash" ON "refresh_tokens" ("token_hash")`,
@@ -62,7 +63,7 @@ export class InitialSchema1757500000000 implements MigrationInterface {
         "status" varchar(20) NOT NULL DEFAULT 'open',
         "priority" varchar(20) NOT NULL DEFAULT 'normal',
         "category" varchar(100),
-        "assigned_to_id" varchar,
+        "assigned_to_id" ${uuid},
         "created_at" ${ts} NOT NULL DEFAULT ${now},
         "updated_at" ${ts} NOT NULL DEFAULT ${now}
       )`);
@@ -77,11 +78,11 @@ export class InitialSchema1757500000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "ticket_messages" (
         ${id},
-        "ticket_id" varchar NOT NULL REFERENCES "tickets"("id") ON DELETE CASCADE,
+        "ticket_id" ${uuid} NOT NULL REFERENCES "tickets"("id") ON DELETE CASCADE,
         "body" text NOT NULL,
         "is_staff_reply" boolean NOT NULL DEFAULT ${pg ? 'false' : '0'},
         "author_name" varchar(255),
-        "author_user_id" varchar,
+        "author_user_id" ${uuid},
         "created_at" ${ts} NOT NULL DEFAULT ${now}
       )`);
     await queryRunner.query(

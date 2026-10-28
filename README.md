@@ -73,6 +73,15 @@ Default admin (development only): `admin@synapgrid.net` / `Admin@123!` — **cha
 | `npm run migration:generate` / `run` / `revert` | Migrations |
 | `npm run seed` | Seed admin + demo services |
 
+### Render / production startup
+
+`npm run start:prod` automatically runs pending migrations and seeds the configured admin user before starting the server. For PostgreSQL (including Neon), set either:
+
+- `DATABASE_URL=postgresql://...`, or
+- `DB_TYPE=postgres` with `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, and `DB_DATABASE`.
+
+A PostgreSQL connection URL is also detected automatically when placed in `DB_DATABASE`. For SQLite on Render, mount a persistent disk and point `DB_DATABASE` to a file inside that mount; do not use ephemeral SQLite storage for production data.
+
 ## API overview
 
 Base URL: `http://localhost:3000/api/v1` — full docs at `http://localhost:3000/docs`.
