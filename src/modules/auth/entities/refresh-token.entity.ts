@@ -2,6 +2,12 @@ import { Column, Entity, Index, ManyToOne, JoinColumn, PrimaryGeneratedColumn, C
 import { Exclude } from 'class-transformer';
 import { User } from '../../users/entities/user.entity';
 
+const dateTimeType =
+  process.env.DB_TYPE === 'postgres' ||
+  /^postgres(?:ql)?:\/\//i.test(process.env.DATABASE_URL ?? process.env.DB_DATABASE ?? '')
+    ? 'timestamp'
+    : 'datetime';
+
 @Entity('refresh_tokens')
 export class RefreshToken {
   @PrimaryGeneratedColumn('uuid')
@@ -15,13 +21,13 @@ export class RefreshToken {
   @Column({ type: 'boolean', default: false })
   revoked: boolean;
 
-  @Column({ type: 'datetime', nullable: true })
-  expiresAt: Date;
+  @Column({ type: dateTimeType, nullable: true })
+  expiresAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: dateTimeType, nullable: true })
   revokedAt: Date | null;
 
   @ManyToOne(() => User, (user) => user.refreshTokens, { onDelete: 'CASCADE' })

@@ -1,5 +1,6 @@
 import { DataSourceOptions } from 'typeorm';
-import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
+import { dirname, join, resolve } from 'path';
 import { SnakeNamingStrategy } from '../common/database/snake-naming.strategy';
 
 /**
@@ -8,7 +9,9 @@ import { SnakeNamingStrategy } from '../common/database/snake-naming.strategy';
  * so schema definitions never drift between them.
  */
 export function buildDataSourceOptions(env: Record<string, string | undefined>): DataSourceOptions {
-  const isPostgres = env.DB_TYPE === 'postgres';
+  const databaseUrl = env.DATABASE_URL ?? env.DB_DATABASE;
+  const hasPostgresUrl = /^postgres(?:ql)?:\/\//i.test(databaseUrl ?? '');
+  const isPostgres = env.DB_TYPE === 'postgres' || hasPostgresUrl;
 
   const common = {
     entities: [join(__dirname, '../**/*.entity{.ts,.js}')],
@@ -19,21 +22,33 @@ export function buildDataSourceOptions(env: Record<string, string | undefined>):
   };
 
   if (isPostgres) {
+    const url = env.DATABASE_URL ?? (hasPostgresUrl ? env.DB_DATABASE : undefined);
+    const requiresSsl = env.DB_SSL === 'true' || url?.includes('sslmode=require');
     return {
       ...common,
       type: 'postgres',
-      host: env.DB_HOST ?? 'localhost',
-      port: parseInt(env.DB_PORT ?? '5432', 10),
-      username: env.DB_USERNAME,
-      password: env.DB_PASSWORD,
-      database: env.DB_DATABASE ?? 'synapgrid',
-      ssl: env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      ...(url
+        ? { url }
+        : {
+            host: env.DB_HOST ?? 'localhost',
+            port: parseInt(env.DB_PORT ?? '5432', 10),
+            username: env.DB_USERNAME,
+            password: env.DB_PASSWORD,
+            database: env.DB_DATABASE ?? 'synapgrid',
+          }),
+      ssl: requiresSsl ? { rejectUnauthorized: false } : false,
     } as DataSourceOptions;
   }
 
+  const database = env.DB_DATABASE ?? './data/synapgrid.sqlite';
+  if (database !== ':memory:' && !database.includes('://')) {
+    const databasePath = resolve(database);
+    const databaseDirectory = dirname(databasePath);
+    if (!existsSync(databaseDirectory)) mkdirSync(databaseDirectory, { recursive: true });
+  }
   return {
     ...common,
     type: 'sqlite',
-    database: env.DB_DATABASE ?? './data/synapgrid.sqlite',
+    database,
   } as DataSourceOptions;
 }
